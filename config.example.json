@@ -1,0 +1,34 @@
+{
+  "ddragon": {
+    "region": "na",
+    "locale": "en_US",
+    "runes_path": "runesReforged.json"
+  },
+  "riot": {
+    "platform": "na1",
+    "region": "americas",
+    "queue": null,
+    "seed_summoner_names": [],
+    "seed_summoner_ids": [],
+    "seed_riot_ids": [],
+    "seed_puuids": [],
+    "seed_leagues": ["challenger", "grandmaster", "master"],
+    "matches_per_seed": 10,
+    "request_sleep_s": 0.2,
+    "fetch_timeline": false,
+    "account_regions": ["americas", "europe", "asia"]
+  },
+  "esports": {
+    "leagues": [],
+    "league_slugs": [],
+    "hl": "en-US",
+    "progress": true,
+    "recent_days": null,
+    "state_flush_every": 50,
+    "timeout_s": 40
+  },
+  "oracle_elixir": {
+    "keep_tmp": false,
+    "out_dir": null
+  }
+}
