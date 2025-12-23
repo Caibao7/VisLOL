@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VisLOL Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <div>
+          <div class="app-kicker">Interactive League of Legends Data Console</div>
+          <h1>VisLOL</h1>
+        </div>
+        <div class="status" id="global-status">Loading data...</div>
+      </header>
+
+      <nav class="main-tabs" data-tabs="main">
+        <button class="tab active" data-tab="game">Game Ecosystem</button>
+        <button class="tab" data-tab="player">Player</button>
+        <button class="tab" data-tab="esports">Esports</button>
+      </nav>
+
+      <main>
+        <section class="module active" id="module-game" data-tab-panel="game">
+          <nav class="sub-tabs" data-tabs="game">
+            <button class="tab active" data-tab="patch">Patch</button>
+            <button class="tab" data-tab="champions">Champions</button>
+            <button class="tab" data-tab="items">Items</button>
+          </nav>
+
+          <div class="sub-panel active" data-tab-panel="patch">
+            <div class="grid two">
+              <div class="card">
+                <h3>Current Version</h3>
+                <div class="badge" id="current-version">-</div>
+                <div class="meta" id="current-realm">Realm: -</div>
+              </div>
+              <div class="card">
+                <h3>Available Versions</h3>
+                <div class="list" id="version-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sub-panel" data-tab-panel="champions">
+            <div class="filters">
+              <label>
+                Role Tag
+                <select id="champion-tag"></select>
+              </label>
+              <label>
+                Growth Metric
+                <select id="champion-growth-metric">
+                  <option value="hp">HP</option>
+                  <option value="attackdamage">Attack Damage</option>
+                  <option value="armor">Armor</option>
+                  <option value="spellblock">Magic Resist</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid two">
+              <div class="card">
+                <h3>Champion Scatter</h3>
+                <div class="chart" id="champion-scatter"></div>
+              </div>
+              <div class="card" id="champion-detail">
+                <h3>Champion Details</h3>
+                <div class="placeholder">Select a champion dot to inspect stats.</div>
+                <div class="detail hidden">
+                  <div class="detail-header">
+                    <div>
+                      <div class="detail-name" id="champion-name">-</div>
+                      <div class="detail-sub" id="champion-title">-</div>
+                    </div>
+                    <div class="tags" id="champion-tags"></div>
+                  </div>
+                  <div class="detail-body">
+                    <div class="detail-blurb" id="champion-blurb"></div>
+                    <div class="stats" id="champion-stats"></div>
+                    <div class="chart" id="champion-growth"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sub-panel" data-tab-panel="items">
+            <div class="filters">
+              <label>
+                Stat Axis
+                <select id="item-stat">
+                  <option value="attackDamage">Attack Damage</option>
+                  <option value="abilityPower">Ability Power</option>
+                  <option value="armor">Armor</option>
+                  <option value="magicResist">Magic Resist</option>
+                  <option value="health">Health</option>
+                  <option value="attackSpeed">Attack Speed</option>
+                </select>
+              </label>
+              <div class="tag-filter" id="item-tags"></div>
+            </div>
+            <div class="grid two">
+              <div class="card">
+                <h3>Item Scatter</h3>
+                <div class="chart" id="item-scatter"></div>
+              </div>
+              <div class="card" id="item-detail">
+                <h3>Item Details</h3>
+                <div class="placeholder">Select an item dot to inspect build paths.</div>
+                <div class="detail hidden">
+                  <div class="detail-header">
+                    <div>
+                      <div class="detail-name" id="item-name">-</div>
+                      <div class="detail-sub" id="item-cost">-</div>
+                    </div>
+                    <div class="tags" id="item-tags-display"></div>
+                  </div>
+                  <div class="detail-body">
+                    <div class="stats" id="item-stats"></div>
+                    <div class="flow">
+                      <div>
+                        <h4>Build From</h4>
+                        <div class="pill-list" id="item-from"></div>
+                      </div>
+                      <div>
+                        <h4>Build Into</h4>
+                        <div class="pill-list" id="item-into"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="module" id="module-player" data-tab-panel="player">
+          <nav class="sub-tabs" data-tabs="player">
+            <button class="tab active" data-tab="profile">Profile</button>
+            <button class="tab" data-tab="mastery">Champion Pool</button>
+            <button class="tab" data-tab="challenges">Challenges</button>
+            <button class="tab" data-tab="matches">Match History</button>
+          </nav>
+
+          <div class="sub-panel active" data-tab-panel="profile">
+            <div class="filters">
+              <label>
+                Player
+                <select id="player-select"></select>
+              </label>
+              <button class="ghost" id="player-refresh">Refresh Data</button>
+              <div class="meta" id="player-update">Last update: -</div>
+            </div>
+            <div class="grid two">
+              <div class="card" id="player-profile"></div>
+              <div class="card" id="player-ranked"></div>
+            </div>
+          </div>
+
+          <div class="sub-panel" data-tab-panel="mastery">
+            <div class="filters">
+              <label>
+                Top N
+                <select id="mastery-top">
+                  <option value="10">10</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid two">
+              <div class="card">
+                <h3>Champion Points</h3>
+                <div class="chart" id="mastery-bar"></div>
+              </div>
+              <div class="card">
+                <h3>Mastery Table</h3>
+                <div class="table" id="mastery-table"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sub-panel" data-tab-panel="challenges">
+            <div class="grid two">
+              <div class="card">
+                <h3>Category Radar</h3>
+                <div class="chart" id="challenge-radar"></div>
+              </div>
+              <div class="card">
+                <h3>Challenge Highlights</h3>
+                <div class="table" id="challenge-table"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sub-panel" data-tab-panel="matches">
+            <div class="filters">
+              <label>
+                Metric
+                <select id="match-metric">
+                  <option value="kda">KDA</option>
+                  <option value="kills">Kills</option>
+                  <option value="deaths">Deaths</option>
+                  <option value="assists">Assists</option>
+                </select>
+              </label>
+              <label>
+                Recent N
+                <select id="match-limit">
+                  <option value="10">10</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid two">
+              <div class="card">
+                <h3>Match Trend</h3>
+                <div class="chart" id="match-line"></div>
+              </div>
+              <div class="card">
+                <h3>Match List</h3>
+                <div class="table" id="match-table"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="module" id="module-esports" data-tab-panel="esports">
+          <div class="filters" id="esports-filters">
+            <div class="filter-group">
+              <div class="filter-title">Years</div>
+              <div class="chip-list" id="esports-years"></div>
+            </div>
+            <div class="filter-group">
+              <div class="filter-title">Leagues</div>
+              <div class="chip-list" id="esports-leagues"></div>
+            </div>
+            <button class="ghost" id="esports-apply">Apply Filters</button>
+          </div>
+
+          <nav class="sub-tabs" data-tabs="esports">
+            <button class="tab active" data-tab="overview">Overview</button>
+            <button class="tab" data-tab="teams">Teams</button>
+            <button class="tab" data-tab="players">Players</button>
+            <button class="tab" data-tab="champions">Meta & Draft</button>
+            <button class="tab" data-tab="match">Match Review</button>
+          </nav>
+
+          <div class="sub-panel active" data-tab-panel="overview">
+            <div class="grid two">
+              <div class="card">
+                <h3>Matches by League</h3>
+                <div class="chart" id="esports-league-bar"></div>
+              </div>
+              <div class="card">
+                <h3>Average Game Length</h3>
+                <div class="chart" id="esports-length-bar"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sub-panel" data-tab-panel="teams">
+            <div class="grid two">
+              <div class="card">
+                <h3>Top Teams</h3>
+                <div class="chart" id="teams-bar"></div>
+              </div>
+              <div class="card">
+                <h3>Team Table</h3>
+                <div class="table" id="teams-table"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sub-panel" data-tab-panel="players">
+            <div class="grid two">
+              <div class="card">
+                <h3>Top Players</h3>
+                <div class="chart" id="players-bar"></div>
+              </div>
+              <div class="card">
+                <h3>Position Distribution</h3>
+                <div class="chart" id="positions-bar"></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Player Table</h3>
+              <div class="table" id="players-table"></div>
+            </div>
+          </div>
+
+          <div class="sub-panel" data-tab-panel="champions">
+            <div class="grid two">
+              <div class="card">
+                <h3>Top Picks</h3>
+                <div class="chart" id="champions-pick-bar"></div>
+              </div>
+              <div class="card">
+                <h3>Top Bans</h3>
+                <div class="chart" id="champions-ban-bar"></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Champion Trend</h3>
+              <div class="filters">
+                <label>
+                  Champion
+                  <input id="champion-trend-input" placeholder="Type champion name" />
+                </label>
+                <button class="ghost" id="champion-trend-btn">Load Trend</button>
+              </div>
+              <div class="chart" id="champion-trend-line"></div>
+            </div>
+          </div>
+
+          <div class="sub-panel" data-tab-panel="match">
+            <div class="filters">
+              <label>
+                Game ID
+                <input id="match-id-input" placeholder="e.g. LOLTMNT03_179647" />
+              </label>
+              <label>
+                Year (optional)
+                <input id="match-year-input" placeholder="2025" />
+              </label>
+              <button class="ghost" id="match-load-btn">Load Match</button>
+            </div>
+            <div class="card" id="match-summary"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
