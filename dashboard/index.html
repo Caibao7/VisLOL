@@ -24,6 +24,10 @@
 
       <main>
         <section class="module active" id="module-game" data-tab-panel="game">
+          <div class="toolbar">
+            <button class="ghost" id="update-ddragon">Update Game Data</button>
+            <div class="meta" id="update-ddragon-status">Status: idle</div>
+          </div>
           <nav class="sub-tabs" data-tabs="game">
             <button class="tab active" data-tab="patch">Patch</button>
             <button class="tab" data-tab="champions">Champions</button>
@@ -50,20 +54,12 @@
                 Role Tag
                 <select id="champion-tag"></select>
               </label>
-              <label>
-                Growth Metric
-                <select id="champion-growth-metric">
-                  <option value="hp">HP</option>
-                  <option value="attackdamage">Attack Damage</option>
-                  <option value="armor">Armor</option>
-                  <option value="spellblock">Magic Resist</option>
-                </select>
-              </label>
             </div>
             <div class="grid two">
               <div class="card">
                 <h3>Champion Scatter</h3>
                 <div class="chart" id="champion-scatter"></div>
+                <div class="legend" id="champion-legend"></div>
               </div>
               <div class="card" id="champion-detail">
                 <h3>Champion Details</h3>
@@ -76,11 +72,12 @@
                     </div>
                     <div class="tags" id="champion-tags"></div>
                   </div>
-                  <div class="detail-body">
-                    <div class="detail-blurb" id="champion-blurb"></div>
-                    <div class="stats" id="champion-stats"></div>
-                    <div class="chart" id="champion-growth"></div>
-                  </div>
+                    <div class="detail-body">
+                      <div class="detail-blurb" id="champion-blurb"></div>
+                      <div class="stats" id="champion-stats"></div>
+                      <div class="meta" id="champion-growth-title">Growth delta (Lv1 -> Lv18)</div>
+                      <div class="chart" id="champion-growth"></div>
+                    </div>
                 </div>
               </div>
             </div>
@@ -103,7 +100,7 @@
             </div>
             <div class="grid two">
               <div class="card">
-                <h3>Item Scatter</h3>
+                <h3>Top Items by Stat Efficiency</h3>
                 <div class="chart" id="item-scatter"></div>
               </div>
               <div class="card" id="item-detail">
@@ -146,6 +143,11 @@
 
           <div class="sub-panel active" data-tab-panel="profile">
             <div class="filters">
+              <label>
+                Riot ID
+                <input id="riot-id-input" placeholder="GameName#Tag" />
+              </label>
+              <button class="ghost" id="riot-id-run">Fetch Player</button>
               <label>
                 Player
                 <select id="player-select"></select>
@@ -229,6 +231,11 @@
         </section>
 
         <section class="module" id="module-esports" data-tab-panel="esports">
+          <div class="toolbar">
+            <button class="ghost" id="update-esports">Update Esports GW</button>
+            <button class="ghost" id="update-oracle">Update Oracle</button>
+            <div class="meta" id="update-esports-status">Status: idle</div>
+          </div>
           <div class="filters" id="esports-filters">
             <div class="filter-group">
               <div class="filter-title">Years</div>
@@ -246,7 +253,6 @@
             <button class="tab" data-tab="teams">Teams</button>
             <button class="tab" data-tab="players">Players</button>
             <button class="tab" data-tab="champions">Meta & Draft</button>
-            <button class="tab" data-tab="match">Match Review</button>
           </nav>
 
           <div class="sub-panel active" data-tab-panel="overview">
@@ -259,6 +265,15 @@
                 <h3>Average Game Length</h3>
                 <div class="chart" id="esports-length-bar"></div>
               </div>
+            </div>
+            <div class="card">
+              <h3>Matches Over Time</h3>
+              <div class="chart" id="esports-year-line"></div>
+            </div>
+            <div class="card">
+              <h3>League Share</h3>
+              <div class="chart" id="esports-league-pie"></div>
+              <div class="legend" id="esports-league-legend"></div>
             </div>
           </div>
 
@@ -273,6 +288,20 @@
                 <div class="table" id="teams-table"></div>
               </div>
             </div>
+            <div class="card">
+              <h3>Team Style Map</h3>
+              <div class="chart" id="teams-scatter"></div>
+            </div>
+            <div class="card">
+              <h3>Team Style Radar</h3>
+              <div class="filters">
+                <label>
+                  Team
+                  <select id="team-radar-select"></select>
+                </label>
+              </div>
+              <div class="chart" id="team-radar"></div>
+            </div>
           </div>
 
           <div class="sub-panel" data-tab-panel="players">
@@ -282,9 +311,23 @@
                 <div class="chart" id="players-bar"></div>
               </div>
               <div class="card">
-                <h3>Position Distribution</h3>
-                <div class="chart" id="positions-bar"></div>
+                <h3>Position Distribution (Box)</h3>
+                <div class="filters">
+                  <label>
+                    Metric
+                    <select id="position-metric">
+                      <option value="dpm" selected>DPM</option>
+                      <option value="earned gpm">Earned GPM</option>
+                      <option value="kp">KP</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="chart" id="positions-box"></div>
               </div>
+            </div>
+            <div class="card">
+              <h3>Player Damage vs KDA</h3>
+              <div class="chart" id="players-scatter"></div>
             </div>
             <div class="card">
               <h3>Player Table</h3>
@@ -304,6 +347,14 @@
               </div>
             </div>
             <div class="card">
+              <h3>BP Heatmap</h3>
+              <div class="chart" id="bp-heatmap"></div>
+            </div>
+            <div class="card">
+              <h3>Position -> Champion Flow</h3>
+              <div class="chart" id="bp-sankey"></div>
+            </div>
+            <div class="card">
               <h3>Champion Trend</h3>
               <div class="filters">
                 <label>
@@ -316,20 +367,6 @@
             </div>
           </div>
 
-          <div class="sub-panel" data-tab-panel="match">
-            <div class="filters">
-              <label>
-                Game ID
-                <input id="match-id-input" placeholder="e.g. LOLTMNT03_179647" />
-              </label>
-              <label>
-                Year (optional)
-                <input id="match-year-input" placeholder="2025" />
-              </label>
-              <button class="ghost" id="match-load-btn">Load Match</button>
-            </div>
-            <div class="card" id="match-summary"></div>
-          </div>
         </section>
       </main>
     </div>

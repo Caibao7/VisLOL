@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+import math
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from pipeline.config import load_config, DEFAULT_CONFIG
@@ -347,7 +348,16 @@ def list_oracle_leagues(paths: AppPaths, years: Sequence[str]) -> List[str]:
 
 
 def _to_numeric(series, default=0.0):
-    return series.apply(lambda x: default if x in ("", None) else x).astype(float)
+    def _coerce(value):
+        if value in ("", None):
+            return default
+        try:
+            numeric = float(value)
+        except Exception:
+            return default
+        return numeric if math.isfinite(numeric) else default
+
+    return series.apply(_coerce).astype(float)
 
 
 def oracle_overview(paths: AppPaths, years: Sequence[str], leagues: Sequence[str]) -> Dict[str, Any]:
@@ -401,19 +411,43 @@ def oracle_team_stats(paths: AppPaths, years: Sequence[str], leagues: Sequence[s
     team_map: Dict[Tuple[str, str], Dict[str, Any]] = {}
     for year in years:
         df = _read_oracle(paths, year, [
-            "league", "year", "teamname", "teamid", "result", "gamelength",
-            "earned gpm", "dpm", "visionscore", "damageshare", "kills", "deaths", "assists",
-            "position"
+            "league", "year", "gameid", "teamname", "teamid", "result", "gamelength",
+            "earned gpm", "dpm", "visionscore", "damageshare", "damagetochampions",
+            "kills", "deaths", "assists", "position"
         ])
         if df is None:
             continue
-        df = df[df["position"] == "team"]
+        players_df = df[df["position"] != "team"].copy()
+        df = df[df["position"] == "team"].copy()
         if leagues:
             df = df[df["league"].isin(leagues)]
+            players_df = players_df[players_df["league"].isin(leagues)]
         if df.empty:
             continue
         for col in ["result", "earned gpm", "dpm", "visionscore", "damageshare", "kills", "deaths", "assists"]:
             df[col] = _to_numeric(df[col], 0)
+        if not players_df.empty:
+            players_df["damagetochampions"] = _to_numeric(players_df["damagetochampions"], 0)
+            team_damage = (
+                players_df.groupby(["teamname", "teamid", "gameid"])["damagetochampions"]
+                .sum()
+                .reset_index()
+            )
+            game_total = (
+                players_df.groupby(["gameid"])["damagetochampions"]
+                .sum()
+                .reset_index()
+                .rename(columns={"damagetochampions": "game_damage"})
+            )
+            team_damage = team_damage.merge(game_total, on="gameid", how="left")
+            team_damage["team_damage_share"] = team_damage["damagetochampions"] / team_damage["game_damage"].replace(0, 1)
+            df = df.merge(
+                team_damage[["teamname", "teamid", "gameid", "team_damage_share"]],
+                on=["teamname", "teamid", "gameid"],
+                how="left",
+            )
+            df["damageshare"] = df["team_damage_share"].fillna(df["damageshare"])
+            df = df.drop(columns=["team_damage_share"])
         df["kda"] = (df["kills"] + df["assists"]) / df["deaths"].replace(0, 1)
         grouped = df.groupby(["teamname", "teamid"])
         for (teamname, teamid), group in grouped:
@@ -610,6 +644,73 @@ def oracle_champion_trend(paths: AppPaths, years: Sequence[str], leagues: Sequen
         trend.append({"year": int(year), "picks": count})
     return trend
 
+
+def oracle_bp_heatmap(paths: AppPaths, years: Sequence[str], leagues: Sequence[str], top_n: int = 12) -> Dict[str, Any]:
+    combined = []
+    for year in years:
+        df = _read_oracle(paths, year, ["league", "champion", "position"])
+        if df is None:
+            continue
+        df = df[df["position"] != "team"]
+        if leagues:
+            df = df[df["league"].isin(leagues)]
+        if df.empty:
+            continue
+        combined.append(df)
+    if not combined:
+        return {"leagues": [], "champions": [], "values": []}
+    import pandas as pd  # type: ignore
+
+    df = pd.concat(combined, ignore_index=True)
+    top_champions = df["champion"].value_counts().head(top_n).index.tolist()
+    league_list = df["league"].dropna().unique().tolist()
+    if leagues:
+        league_list = [l for l in leagues if l in league_list]
+    values = []
+    for league in league_list:
+        row = []
+        league_df = df[df["league"] == league]
+        counts = league_df["champion"].value_counts()
+        for champ in top_champions:
+            row.append(int(counts.get(champ, 0)))
+        values.append(row)
+    return {"leagues": league_list, "champions": top_champions, "values": values}
+
+
+def oracle_bp_sankey(paths: AppPaths, years: Sequence[str], leagues: Sequence[str], top_n: int = 8) -> Dict[str, Any]:
+    combined = []
+    for year in years:
+        df = _read_oracle(paths, year, ["league", "champion", "position"])
+        if df is None:
+            continue
+        df = df[df["position"] != "team"]
+        if leagues:
+            df = df[df["league"].isin(leagues)]
+        if df.empty:
+            continue
+        combined.append(df)
+    if not combined:
+        return {"positions": [], "champions": [], "links": []}
+    import pandas as pd  # type: ignore
+
+    df = pd.concat(combined, ignore_index=True)
+    positions = ["top", "jng", "mid", "bot", "sup"]
+    df = df[df["position"].isin(positions)]
+    top_champions = df["champion"].value_counts().head(top_n).index.tolist()
+    df = df[df["champion"].isin(top_champions)]
+    links = []
+    for pos_idx, pos in enumerate(positions):
+        pos_df = df[df["position"] == pos]
+        counts = pos_df["champion"].value_counts()
+        for champ_idx, champ in enumerate(top_champions):
+            value = int(counts.get(champ, 0))
+            if value:
+                links.append({
+                    "sourceIndex": pos_idx,
+                    "targetIndex": champ_idx,
+                    "value": value,
+                })
+    return {"positions": positions, "champions": top_champions, "links": links}
 
 def oracle_match_details(paths: AppPaths, game_id: str, year: Optional[str] = None) -> Dict[str, Any]:
     years = [year] if year else list_oracle_years(paths)
